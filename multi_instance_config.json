@@ -2,17 +2,10 @@
   "instances": [
     {
       "instance_id": 1,
-      "gpu_id": 0,
-      "port": 9997,
-      "pid": 449348,
-      "status": "running"
-    },
-    {
-      "instance_id": 2,
       "gpu_id": 1,
-      "port": 9998,
-      "pid": 449349,
-      "status": "running"
+      "port": 9997,
+      "pid": 147430,
+      "status": "error"
     }
   ]
 }

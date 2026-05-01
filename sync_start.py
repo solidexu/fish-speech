@@ -11,7 +11,7 @@ import time
 import json
 from pathlib import Path
 
-FISH_SPEECH_DIR = "/disk0/repo/manju/fish-speech"
+FISH_SPEECH_DIR = "/disk0/repo/manju/third_party/fish-speech"
 CONFIG_FILE = os.path.join(FISH_SPEECH_DIR, "multi_instance_config.json")
 
 
@@ -25,7 +25,7 @@ def start_instances(gpus):
         log_file = f"/tmp/fish_speech_instances/instance_{instance_id}_gpu{gpu_id}.log"
 
         cmd = [
-            f"{FISH_SPEECH_DIR}/.venv/bin/python",
+            "python3",  # 使用系统 Python3
             f"{FISH_SPEECH_DIR}/tools/api_server.py",
             "--llama-checkpoint-path", "checkpoints/s2-pro",
             "--decoder-checkpoint-path", "checkpoints/s2-pro/codec.pth",

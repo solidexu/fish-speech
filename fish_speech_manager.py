@@ -34,8 +34,8 @@ class FishSpeechManager:
     """Fish Speech 多实例管理器"""
 
     def __init__(self, config_path: str = None):
-        self.config_path = config_path or "/disk0/repo/manju/fish-speech/multi_instance_config.json"
-        self.fish_speech_dir = "/disk0/repo/manju/fish-speech"
+        self.config_path = config_path or "/disk0/repo/manju/third_party/fish-speech/multi_instance_config.json"
+        self.fish_speech_dir = "/disk0/repo/manju/third_party/fish-speech"
         self.log_dir = Path("/tmp/fish_speech_instances")
         self.log_dir.mkdir(parents=True, exist_ok=True)
         self.instances: Dict[int, FishSpeechInstance] = {}
@@ -86,15 +86,27 @@ class FishSpeechManager:
 
     def start_instance(self, instance_id: int, gpu_id: int, port: int) -> bool:
         """启动单个 Fish Speech 实例"""
+        # 检查实例是否真的在运行（验证端口是否监听）
         if instance_id in self.instances and self.instances[instance_id].status == "running":
-            print(f"实例 {instance_id} 已在运行")
-            return True
+            # 验证端口是否真的在监听
+            try:
+                import requests
+                response = requests.get(f"http://localhost:{port}/", timeout=2)
+                if response.status_code == 200:
+                    print(f"实例 {instance_id} 已在运行")
+                    return True
+            except:
+                # 端口未监听，清除旧状态
+                print(f"实例 {instance_id} 状态错误（端口未监听），重新启动...")
+                self.instances[instance_id].status = "stopped"
+                self.instances[instance_id].pid = None
+                self.save_config()
 
         log_file = self.log_dir / f"instance_{instance_id}_gpu{gpu_id}.log"
 
         # 启动命令
         cmd = [
-            os.path.join(self.fish_speech_dir, '.venv/bin/python'),
+            'python3',  # 使用系统 Python
             'tools/api_server.py',
             '--llama-checkpoint-path', 'checkpoints/s2-pro',
             '--decoder-checkpoint-path', 'checkpoints/s2-pro/codec.pth',
@@ -334,7 +346,7 @@ class FishSpeechClient:
 
         url = f"http://localhost:{instance.port}/v1/tts"
         cmd = [
-            '/disk0/repo/manju/fish-speech/.venv/bin/python',
+            'python3',  # 使用系统 Python3
             'tools/api_client.py',
             '-u', url,
             '-t', text,
@@ -347,7 +359,7 @@ class FishSpeechClient:
         try:
             process = await asyncio.create_subprocess_exec(
                 *cmd,
-                cwd='/disk0/repo/manju/fish-speech',
+                cwd='/disk0/repo/manju/third_party/fish-speech',
                 stdout=asyncio.subprocess.PIPE,
                 stderr=asyncio.subprocess.PIPE
             )
@@ -435,7 +447,7 @@ def main():
             print(f"使用实例 {instance.instance_id} (GPU {instance.gpu_id}, 端口 {instance.port})")
 
         cmd = [
-            '/disk0/repo/manju/fish-speech/.venv/bin/python',
+            'python3',  # 使用系统 Python3
             'tools/api_client.py',
             '-u', f'http://localhost:{instance.port}/v1/tts',
             '-t', args.text,
@@ -444,7 +456,7 @@ def main():
             '--format', 'wav',
             '--no-play'
         ]
-        subprocess.run(cmd, cwd='/disk0/repo/manju/fish-speech')
+        subprocess.run(cmd, cwd='/disk0/repo/manju/third_party/fish-speech')
 
 
 if __name__ == '__main__':
